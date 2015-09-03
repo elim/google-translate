@@ -120,11 +120,13 @@ QUERY-PARAMS must be an alist of field-value pairs."
     (set-buffer-multibyte t)
     (goto-char (point-min))
     (when (null for-test-purposes)
-      (re-search-forward (format "\n\n"))
+      (re-search-forward (format "\n\n") nil 'noerror)
       (delete-region (point-min) (point)))
     (if (null for-test-purposes)
         (prog1 
-            (buffer-string)
+            (if (string= (buffer-string) "")
+                (google-translate--http-response-body url)
+              (buffer-string))
           (kill-buffer))
       (buffer-name))))
 
