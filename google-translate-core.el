@@ -77,6 +77,8 @@
 (defvar google-translate-listen-url
   "http://translate.google.com/translate_tts")
 
+(defvar google-translate-wait-for-response 0)
+
 (defun google-translate--format-query-string (query-params)
   "Format QUERY-PARAMS as a query string.
 
@@ -117,6 +119,7 @@ QUERY-PARAMS must be an alist of field-value pairs."
 (defun google-translate--http-response-body (url &optional for-test-purposes)
   "Retrieve URL and return the response body as a string."
   (with-current-buffer (url-retrieve-synchronously url)
+    (sit-for google-translate-wait-for-response)
     (set-buffer-multibyte t)
     (goto-char (point-min))
     (when (null for-test-purposes)
