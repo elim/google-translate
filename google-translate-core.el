@@ -114,18 +114,28 @@ QUERY-PARAMS must be an alist of field-value pairs."
                                          ("client"  . "t")
                                          ("prev"    . "input"))))
 
+(defvar google-translate-retry-count 0)
+
 (defun google-translate--http-response-body (url &optional for-test-purposes)
   "Retrieve URL and return the response body as a string."
   (with-current-buffer (url-retrieve-synchronously url)
     (set-buffer-multibyte t)
     (goto-char (point-min))
     (when (null for-test-purposes)
-      (re-search-forward (format "\n\n"))
+      (re-search-forward (format "\n\n") nil 'noerror)
       (delete-region (point-min) (point)))
     (if (null for-test-purposes)
         (prog1 
-            (buffer-string)
-          (kill-buffer))
+            (if (string= (buffer-string) "")
+                (progn
+                  (sit-for 0.25)
+                  (setq google-translate-retry-count
+                        (+ google-translate-retry-count 1))
+                  (message "Retrying... (%04d)" google-translate-retry-count)
+                  (google-translate--http-response-body url))
+              (buffer-string))
+          (kill-buffer)
+          (setq google-translate-retry-count 0))
       (buffer-name))))
 
 (defun google-translate--insert-nulls (string)
